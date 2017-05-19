@@ -13,6 +13,7 @@ project(kfusion C CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 include(cmake/Utils.cmake)
 include(cmake/Targets.cmake)
+include(cmake/find_cuda.cmake)
 
 # ---[ find dependencies
 find_package(OpenCV REQUIRED COMPONENTS core viz highgui)
