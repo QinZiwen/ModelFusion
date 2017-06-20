@@ -1,7 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR}/kfusion/include)
 
-file(GLOB srcs *.cpp *.hpp)
-add_executable(demo ${srcs})
+add_executable(demo demo.cpp)
 target_link_libraries(demo ${OpenCV_LIBS} kfusion)
 
 set_target_properties(demo PROPERTIES
@@ -9,5 +8,18 @@ set_target_properties(demo PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-install(TARGETS demo RUNTIME DESTINATION bin COMPONENT main)
-install(FILES ${srcs} DESTINATION app COMPONENT main)
+add_executable(offLine offLine.cpp)
+target_link_libraries(offLine ${OpenCV_LIBS} kfusion)
+
+set_target_properties(offLine PROPERTIES
+    DEBUG_POSTFIX "d"
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    
+add_executable(orbslam2TSDF orbslam2TSDF.cpp)
+target_link_libraries(orbslam2TSDF ${OpenCV_LIBS} kfusion libORB_SLAM2.so ${Pangolin_LIBRARIES})
+
+set_target_properties(orbslam2TSDF PROPERTIES
+    DEBUG_POSTFIX "d"
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")

@@ -13,7 +13,7 @@ set( CMAKE_CXX_COMPILER "g++" )
 set( CMAKE_BUILD_TYPE "Release" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native -O3 -pthread" )
 
-LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/lib)
+LINK_DIRECTORIES( ${PROJECT_SOURCE_DIR}/Thirdlib)
 
 # ---[ utility
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
@@ -30,10 +30,10 @@ find_package(Eigen3 REQUIRED)
 
 
 include_directories(
+  ${PROJECT_SOURCE_DIR}
   ${OpenCV_INCLUDE_DIRS}
   ${CUDA_INCLUDE_DIRS}
   ${OPENNI_INCLUDE_DIR}
-  ${PROJECT_SOURCE_DIR}
   ${Pangolin_INCLUDE_DIRS}
   # ${EIGEN3_INCLUDE_DIR}           # #include <eigen3/Eigen/Core>
   "/usr/include/eigen3/"        # #include <Eigen/Core>

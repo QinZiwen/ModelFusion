@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "precomp.hpp"
 #include "internal.hpp"
 
@@ -16,7 +18,7 @@ kfusion::KinFuParams kfusion::KinFuParams::default_params()
 
     p.cols = 640;  //pixels
     p.rows = 480;  //pixels
-    p.intr = Intr(525.f, 525.f, p.cols/2 - 0.5f, p.rows/2 - 0.5f);
+    p.intr = Intr(517.306408f, 516.469215f, 318.643040, 318.643040);
 
     p.volume_dims = Vec3i::all(512);  //number of voxels
     p.volume_size = Vec3f::all(3.f);  //meters
@@ -162,6 +164,8 @@ bool kfusion::KinFu::operator()(const kfusion::cuda::Depth& depth, const kfusion
 #endif
 
     cuda::waitAllDefaultStream();
+	
+	cout << "frame_counter = " << frame_counter_ << endl;
 
     //can't perform more on first frame
     if (frame_counter_ == 0)
@@ -187,7 +191,10 @@ bool kfusion::KinFu::operator()(const kfusion::cuda::Depth& depth, const kfusion
         bool ok = icp_->estimateTransform(affine, p.intr, curr_.points_pyr, curr_.normals_pyr, prev_.points_pyr, prev_.normals_pyr);
 #endif
         if (!ok)
+		{
+			cout << "estimateTransform fail!" << endl;
             return reset(), false;
+		}
     }
 
     poses_.push_back(poses_.back() * affine); // curr -> global
@@ -280,6 +287,36 @@ void kfusion::KinFu::renderImage(cuda::Image& image, const Affine3f& pose, int f
         cuda::renderTangentColors(normals_, i2);
     }
 #undef PASS1
+}
+
+bool kfusion::KinFu::integrateDpethUsePose(const cuda::Depth &depth, const Affine3f pose)
+{
+    const KinFuParams& p = params_;
+    const int LEVELS = icp_->getUsedLevelsNum();
+
+    cuda::computeDists(depth, dists_, p.intr);
+    cuda::depthBilateralFilter(depth, prev_.depth_pyr[0], p.bilateral_kernel_size, p.bilateral_sigma_spatial, p.bilateral_sigma_depth);
+
+    if (p.icp_truncate_depth_dist > 0)
+        kfusion::cuda::depthTruncation(prev_.depth_pyr[0], p.icp_truncate_depth_dist);
+
+    for (int i = 1; i < LEVELS; ++i)
+        cuda::depthBuildPyramid(prev_.depth_pyr[i-1], prev_.depth_pyr[i], p.bilateral_sigma_depth);
+
+    for (int i = 0; i < LEVELS; ++i)
+#if defined USE_DEPTH
+        cuda::computeNormalsAndMaskDepth(p.intr(i), prev_.depth_pyr[i], prev_.normals_pyr[i]);
+#else
+        cuda::computePointNormals(p.intr(i), prev_.depth_pyr[i], prev_.points_pyr[i], prev_.normals_pyr[i]);
+#endif
+
+    cuda::waitAllDefaultStream();
+	
+	volume_->integrate(dists_, pose, p.intr);
+	
+	poses_.push_back(pose);
+
+	return true;
 }
 
 
